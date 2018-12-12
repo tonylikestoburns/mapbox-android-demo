@@ -17,6 +17,7 @@ import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
 
 import java.util.List;
 
@@ -48,6 +49,9 @@ public class LocationComponentActivity extends AppCompatActivity implements
 
   @Override
   public void onMapReady(MapboxMap mapboxMap) {
+
+    mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/mapbox/cjerxnqt3cgvp2rmyuxbeqme7"));
+
     LocationComponentActivity.this.mapboxMap = mapboxMap;
     enableLocationComponent();
   }
