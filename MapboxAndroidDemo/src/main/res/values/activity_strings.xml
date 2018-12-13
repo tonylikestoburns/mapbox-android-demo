@@ -289,4 +289,11 @@
     <!-- Tilequery API -->
     <string name="api_response">Tilequery API response:</string>
     <string name="api_error">Error with the request. Do you have internet access?</string>
+
+    <!-- Magic window -->
+    <string name="could_not_get_location">Couldn\'t retrieve the device\'s location!</string>
+
+    <!-- Highlighted line -->
+    <string name="tap_on_line">Tap on one of the blue lines</string>
+
 </resources>

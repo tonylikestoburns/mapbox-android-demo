@@ -49,11 +49,10 @@ public class LocationComponentActivity extends AppCompatActivity implements
 
   @Override
   public void onMapReady(MapboxMap mapboxMap) {
-
-    mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/mapbox/cjerxnqt3cgvp2rmyuxbeqme7"));
-
     LocationComponentActivity.this.mapboxMap = mapboxMap;
-    enableLocationComponent();
+
+    mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/mapbox/cjerxnqt3cgvp2rmyuxbeqme7"),
+      style -> enableLocationComponent());
   }
 
   @SuppressWarnings( {"MissingPermission"})
@@ -70,7 +69,7 @@ public class LocationComponentActivity extends AppCompatActivity implements
       LocationComponent locationComponent = mapboxMap.getLocationComponent();
 
       // Activate with options
-      locationComponent.activateLocationComponent(this, options);
+      locationComponent.activateLocationComponent(this, mapboxMap.getStyle());
 
       // Enable to make component visible
       locationComponent.setLocationComponentEnabled(true);
