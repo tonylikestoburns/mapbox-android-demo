@@ -60,11 +60,6 @@ public class LocationComponentActivity extends AppCompatActivity implements
     // Check if permissions are enabled and if not request
     if (PermissionsManager.areLocationPermissionsGranted(this)) {
 
-      LocationComponentOptions options = LocationComponentOptions.builder(this)
-        .trackingGesturesManagement(true)
-        .accuracyColor(ContextCompat.getColor(this, R.color.mapboxGreen))
-        .build();
-
       // Get an instance of the component
       LocationComponent locationComponent = mapboxMap.getLocationComponent();
 
