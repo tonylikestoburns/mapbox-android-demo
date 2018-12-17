@@ -39,6 +39,7 @@ import com.mapbox.mapboxandroiddemo.examples.basics.SupportMapFragmentActivity;
 import com.mapbox.mapboxandroiddemo.examples.camera.AnimateMapCameraActivity;
 import com.mapbox.mapboxandroiddemo.examples.camera.BoundingBoxCameraActivity;
 import com.mapbox.mapboxandroiddemo.examples.camera.RestrictCameraActivity;
+import com.mapbox.mapboxandroiddemo.examples.camera.SlowlyRotatingCameraActivity;
 import com.mapbox.mapboxandroiddemo.examples.dds.AddRainFallStyleActivity;
 import com.mapbox.mapboxandroiddemo.examples.dds.BathymetryActivity;
 import com.mapbox.mapboxandroiddemo.examples.dds.ChoroplethJsonVectorMixActivity;
@@ -742,6 +743,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
       R.string.activity_camera_restrict_url, false, BuildConfig.MIN_SDK_VERSION));
 
     exampleItemModels.add(new ExampleItemModel(
+      R.id.nav_camera,
+      R.string.activity_camera_slowly_rotating_title,
+      R.string.activity_camera_slowly_rotating_description,
+      new Intent(MainActivity.this, SlowlyRotatingCameraActivity.class),
+      null,
+      R.string.activity_camera_slowly_rotating_url, false, BuildConfig.MIN_SDK_VERSION));
+
+    exampleItemModels.add(new ExampleItemModel(
       R.id.nav_offline,
       R.string.activity_offline_simple_title,
       R.string.activity_offline_simple_description,
@@ -1002,12 +1011,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     ));
 
     exampleItemModels.add(new ExampleItemModel(
-        R.id.nav_lab,
-        R.string.activity_lab_fog_background_title,
-        R.string.activity_lab_fog_background_description,
-        new Intent(MainActivity.this, MapFogBackgroundActivity.class),
-        null,
-        R.string.activity_lab_fog_background_url, false, BuildConfig.MIN_SDK_VERSION
+      R.id.nav_lab,
+      R.string.activity_lab_fog_background_title,
+      R.string.activity_lab_fog_background_description,
+      new Intent(MainActivity.this, MapFogBackgroundActivity.class),
+      null,
+      R.string.activity_lab_fog_background_url, false, BuildConfig.MIN_SDK_VERSION
     ));
 
     exampleItemModels.add(new ExampleItemModel(
