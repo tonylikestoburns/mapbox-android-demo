@@ -296,4 +296,10 @@
     <!-- Highlighted line -->
     <string name="tap_on_line">Tap on one of the blue lines</string>
 
+    <!-- Building plugin -->
+    <string name="radial_coordinate">Light radial coordinate</string>
+    <string name="light_azimuth_angle">Light azimuthal angle</string>
+    <string name="light_polar_angle">Light polar angle</string>
+    <string name="building_opacity">Building opacity</string>
+
 </resources>
