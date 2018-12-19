@@ -339,7 +339,8 @@ public class ExpressionIntegrationActivity
       byte[] buffer = new byte[size];
       is.read(buffer);
       is.close();
-      return new String(buffer, "UTF-8");
+      String string = new String(buffer, "UTF-8");
+      return string;
 
     } catch (Exception exception) {
       Log.e("StyleLineActivity", "Exception Loading GeoJSON: " + exception.toString());
