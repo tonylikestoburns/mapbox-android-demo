@@ -54,6 +54,8 @@ class PolygonSelectToggleActivity : AppCompatActivity() , MapboxMap.OnMapClickLi
                         lineColor(Color.GRAY),
                         lineWidth(2f))
                 mapboxMap.style?.addLayerBelow(lineLayer,"place-city-sm")
+
+                mapboxMap.addOnMapClickListener(this)
             }
         }
     }
