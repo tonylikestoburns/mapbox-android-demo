@@ -302,4 +302,7 @@
     <string name="light_polar_angle">Light polar angle</string>
     <string name="building_opacity">Building opacity</string>
 
+    <!-- Polygon select toggle -->
+    <string name="tap_on_neighborhood">Tap on a neighborhood</string>
+
 </resources>

@@ -6,6 +6,7 @@ import android.graphics.PointF
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.widget.Toast
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.FeatureCollection
@@ -14,6 +15,7 @@ import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.style.expressions.Expression
 import com.mapbox.mapboxsdk.style.expressions.Expression.*
 import com.mapbox.mapboxsdk.style.layers.FillLayer
 import com.mapbox.mapboxsdk.style.layers.LineLayer
@@ -27,6 +29,7 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
     private var mapboxMap: MapboxMap? = null
     private val FILL_LAYER_ID = "FILL_LAYER_ID"
     private val LINE_LAYER_ID = "LINE_LAYER_ID"
+    private val NEIGHBORHOOD_POLYGON_SOURCE_ID = "NEIGHBORHOOD_POLYGON_SOURCE_ID"
     private val PROPERTY_SELECTED = "selected"
     private val NEIGHBORHOOD_NAME_PROPERTY = "neighborhood_name"
     private var featureCollection: FeatureCollection? = null
@@ -49,15 +52,16 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
                 this.mapboxMap = mapboxMap
 
                 LoadGeoJsonDataTask(this).execute()
-
                 mapboxMap.addOnMapClickListener(this)
+
+                Toast.makeText(this, getString(R.string.tap_on_neighborhood),
+                        Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     override fun onMapClick(point: LatLng): Boolean {
         return handleClickIcon(mapboxMap?.getProjection()!!.toScreenLocation(point))
-        /*return true*/
     }
 
     /**
@@ -69,29 +73,32 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
         if (mapboxMap == null) {
             return
         }
+        featureCollection = collection
+
         geoJsonSource = GeoJsonSource(
-                "polygon-source", featureCollection)
+                NEIGHBORHOOD_POLYGON_SOURCE_ID, featureCollection)
 
         mapboxMap?.style?.addSource(geoJsonSource!!)
 
-        val fillLayer = FillLayer(FILL_LAYER_ID, "polygon-source")
-        fillLayer.withProperties(
+        val neighborhoodPolygonFillLayer = FillLayer(FILL_LAYER_ID, NEIGHBORHOOD_POLYGON_SOURCE_ID)
+        neighborhoodPolygonFillLayer.withProperties(
                 fillColor(
-                        match(get(PROPERTY_SELECTED),Color.parseColor(""),
-                                stop("true", rgb(251, 176, 59)),
-                                stop("Black", rgb(34, 59, 83)))),
-
+                        match(get(literal(PROPERTY_SELECTED)),
+                                literal(true),
+                                stop(literal(true), Expression.color(Color.parseColor("#F38E39"))),
+                                stop(literal(false), Expression.color(Color.parseColor("#39F3EA")))
+                        )),
                 fillOpacity(.15f))
-        mapboxMap?.style?.addLayerBelow(fillLayer, "place-city-sm")
+        mapboxMap?.style?.addLayerBelow(neighborhoodPolygonFillLayer, "place-city-sm")
 
-        val lineLayer = LineLayer(LINE_LAYER_ID, "polygon-source")
-        lineLayer.withProperties(
+        val neighborhoodOutlineLineLayer = LineLayer(LINE_LAYER_ID, NEIGHBORHOOD_POLYGON_SOURCE_ID)
+        neighborhoodOutlineLineLayer.withProperties(
                 lineColor(Color.GRAY),
                 lineWidth(2f))
-        mapboxMap?.style?.addLayerBelow(lineLayer, "place-city-sm")
-
-        featureCollection = collection
+        mapboxMap?.style?.addLayerBelow(neighborhoodOutlineLineLayer, "place-city-sm")
     }
+
+
     /**
      * This method handles click events for SymbolLayer symbols.
 
@@ -99,16 +106,17 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
      * @param screenPoint the point on screen clicked
      */
     private fun handleClickIcon(screenPoint: PointF): Boolean {
-        val features = mapboxMap?.queryRenderedFeatures(screenPoint, FILL_LAYER_ID,
-                LINE_LAYER_ID)
+        val features = mapboxMap?.queryRenderedFeatures(screenPoint, FILL_LAYER_ID)
         if (features?.isEmpty() == false) {
-            Toast.makeText(this, features[0].getStringProperty("neighborhood_name"),
+            Toast.makeText(this, features[0].getStringProperty(NEIGHBORHOOD_NAME_PROPERTY),
                     Toast.LENGTH_SHORT).show()
-
             val name = features.get(0).getStringProperty(NEIGHBORHOOD_NAME_PROPERTY)
             val featureList = featureCollection?.features()
             for (i in featureList!!.indices) {
                 if (featureList.get(i).getStringProperty(NEIGHBORHOOD_NAME_PROPERTY) == name) {
+                    Log.d("PolygonSelectToggle", "" +
+                            "featureList.get(i).getStringProperty(NEIGHBORHOOD_NAME_PROPERTY) == name")
+
                     if (featureSelectStatus(i)) {
                         setFeatureSelectState(featureList.get(i), false)
                     } else {
@@ -128,6 +136,9 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
      * @param feature the feature to be selected.
      */
     private fun setFeatureSelectState(feature: Feature, selectedState: Boolean) {
+        Log.d("PolygonSelectToggle", "setFeatureSelectState")
+        Log.d("PolygonSelectToggle", "selectedState = " + selectedState)
+
         feature.properties()!!.addProperty(PROPERTY_SELECTED, selectedState)
         refreshSource()
     }
@@ -139,6 +150,9 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
      * @return true if "selected" is true. False if the boolean property is false.
      */
     private fun featureSelectStatus(index: Int): Boolean {
+        Log.d("PolygonSelectToggle", "featureSelectStatus returned "+
+                featureCollection?.features()!![index].getBooleanProperty(PROPERTY_SELECTED))
+
         return if (featureCollection == null) {
             false
         } else featureCollection?.features()!![index].getBooleanProperty(PROPERTY_SELECTED)
@@ -171,6 +185,7 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
     constructor(activity: PolygonSelectToggleActivity) :
             AsyncTask<Void, Void, FeatureCollection>() {
 
+        private val PROPERTY_SELECTED = "selected"
         private val activityRef: WeakReference<PolygonSelectToggleActivity>
 
         init {
@@ -196,7 +211,7 @@ class PolygonSelectToggleActivity : AppCompatActivity(), MapboxMap.OnMapClickLis
             // with a boolean value. If your data's Features don't have this boolean property,
             // add it to the FeatureCollection 's features with the following code:
             for (singleFeature in featureCollection.features()!!) {
-                singleFeature.addBooleanProperty("selected", false)
+                singleFeature.addBooleanProperty(PROPERTY_SELECTED, false)
             }
 
             activity.setUpData(featureCollection)
