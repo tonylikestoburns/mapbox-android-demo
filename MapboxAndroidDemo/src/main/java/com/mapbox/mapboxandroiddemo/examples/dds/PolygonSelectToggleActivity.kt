@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.widget.Toast
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.mapboxandroiddemo.R
 import com.mapbox.mapboxsdk.Mapbox
@@ -46,8 +47,8 @@ class PolygonSelectToggleActivity : AppCompatActivity() , MapboxMap.OnMapClickLi
                 val fillLayer = FillLayer("fill-layer-id", "polygon-source")
                 fillLayer.withProperties(
                         fillColor(Color.GRAY),
-                        fillOpacity(.3f))
-                mapboxMap.style?.addLayer(fillLayer)
+                        fillOpacity(.15f))
+                mapboxMap.style?.addLayerBelow(fillLayer,"place-city-sm")
 
                 val lineLayer = LineLayer("layer-layer-id", "polygon-source")
                 lineLayer.withProperties(
@@ -64,12 +65,10 @@ class PolygonSelectToggleActivity : AppCompatActivity() , MapboxMap.OnMapClickLi
         val pixel = mapboxMap?.getProjection()?.toScreenLocation(point)
         val features = mapboxMap?.queryRenderedFeatures(pixel!!,
                 "fill-layer-id","layer-layer-id")
-
         if (features!!.size > 0) {
-            val feature = features[0]
-            Log.d("PolygonSelectToggle", "feature = " + feature)
+            Toast.makeText(this, features[0].getStringProperty("neighborhood_name"),
+                    Toast.LENGTH_SHORT).show()
         }
-
         return true
     }
 
