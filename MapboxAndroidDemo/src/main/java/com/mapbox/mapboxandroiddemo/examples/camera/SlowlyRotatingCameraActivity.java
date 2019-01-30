@@ -15,6 +15,7 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
 
 /**
  * Animate the map's camera to slowly spin around a single point ont the map.
@@ -26,7 +27,6 @@ public class SlowlyRotatingCameraActivity extends AppCompatActivity implements O
   private static final int DESIRED_SECONDS_PER_ONE_FULL_360_SPIN = 40;
   private MapView mapView;
   private MapboxMap mapboxMap;
-  private CameraPosition position;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -45,21 +45,27 @@ public class SlowlyRotatingCameraActivity extends AppCompatActivity implements O
   }
 
   @Override
-  public void onMapReady(MapboxMap mapboxMap) {
+  public void onMapReady(final MapboxMap mapboxMap) {
+    mapboxMap.setStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
+      @Override
+      public void onStyleLoaded(@NonNull Style style) {
+        SlowlyRotatingCameraActivity.this.mapboxMap = mapboxMap;
 
-    SlowlyRotatingCameraActivity.this.mapboxMap = mapboxMap;
+        mapboxMap.addOnMapClickListener(SlowlyRotatingCameraActivity.this);
 
-    // Toast instructing user to tap on the map
-    Toast.makeText(
-      SlowlyRotatingCameraActivity.this, getString(R.string.tap_on_map_instruction), Toast.LENGTH_LONG).show();
+        // Toast instructing user to tap on the map
+        Toast.makeText(
+          SlowlyRotatingCameraActivity.this, getString(R.string.tap_on_map_instruction), Toast.LENGTH_LONG).show();
 
-    mapboxMap.addOnMapClickListener(this);
-    initAnimator(mapboxMap.getCameraPosition().target);
+        initAnimator(mapboxMap.getCameraPosition().target);
+      }
+    });
   }
 
   @Override
-  public void onMapClick(@NonNull LatLng point) {
+  public boolean onMapClick(@NonNull LatLng point) {
     initAnimator(point);
+    return true;
   }
 
   /**
@@ -69,24 +75,26 @@ public class SlowlyRotatingCameraActivity extends AppCompatActivity implements O
    *
    * @param point the map location that the map camera should spin around
    */
-  private void initAnimator(@NonNull LatLng point) {
+  private void initAnimator(@NonNull final LatLng point) {
     ValueAnimator animator = ValueAnimator.ofFloat(0, DESIRED_NUM_OF_SPINS * 360);
     animator.setDuration(
       DESIRED_NUM_OF_SPINS * DESIRED_SECONDS_PER_ONE_FULL_360_SPIN * 1000); // *1000 to convert to milliseconds
     animator.setInterpolator(new LinearInterpolator());
     animator.setStartDelay(1000);
     animator.start();
-    animator.addUpdateListener(valueAnimator -> {
+    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+      @Override
+      public void onAnimationUpdate(ValueAnimator valueAnimator) {
+        // Retrieve the new animation number
+        Float newBearingValue = (Float) valueAnimator.getAnimatedValue();
 
-      // Retrieve the new animation number
-      Float newBearingValue = (Float) valueAnimator.getAnimatedValue();
-
-      // Use the animation number in a new camera position and then direct the map camera to move to the new position
-      mapboxMap.animateCamera(CameraUpdateFactory
-        .newCameraPosition(new CameraPosition.Builder()
-          .target(new LatLng(point.getLatitude(), point.getLongitude()))
-          .bearing(newBearingValue)
-          .build()));
+        // Use the animation number in a new camera position and then direct the map camera to move to the new position
+        mapboxMap.animateCamera(CameraUpdateFactory
+          .newCameraPosition(new CameraPosition.Builder()
+            .target(new LatLng(point.getLatitude(), point.getLongitude()))
+            .bearing(newBearingValue)
+            .build()));
+      }
     });
   }
 
