@@ -2,8 +2,8 @@ package com.mapbox.mapboxandroiddemo.examples.labs;
 
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
-import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -22,6 +22,7 @@ import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.utils.BitmapUtils;
@@ -43,18 +44,16 @@ public class ValueAnimatorIconAnimationActivity extends AppCompatActivity implem
   OnMapReadyCallback, MapView.OnDidFinishRenderingMapListener,AdapterView.OnItemSelectedListener {
 
   private static final String ICON_ID = "red-pin-icon-id";
-  private static final String TAG = "PinDropActivity";
 
   // This float's actual value will depend on the height of the SymbolLayer icon
   private static final float DEFAULT_DESIRED_ICON_OFFSET = -16;
   private static final float STARTING_DROP_HEIGHT = -100;
-  private static final long DROP_SPEED_MILLISECONDS = 2000;
+  private static final long DROP_SPEED_MILLISECONDS = 1200;
   private MapView mapView;
-  private MapboxMap mapboxMap;
   private SymbolLayer pinSymbolLayer;
+  private Style style;
   private boolean animationHasStarted;
   private TimeInterpolator currentSelectedTimeInterpolator;
-  private int counter;
   private boolean firstRunThrough;
 
   @Override
@@ -78,10 +77,16 @@ public class ValueAnimatorIconAnimationActivity extends AppCompatActivity implem
   }
 
   @Override
-  public void onMapReady(MapboxMap mapboxMap) {
-    this.mapboxMap = mapboxMap;
-    mapView.addOnDidFinishRenderingMapListener(this);
-    addDataToMap();
+  public void onMapReady(@NonNull final MapboxMap mapboxMap) {
+    mapboxMap.setStyle(Style.LIGHT, new Style.OnStyleLoaded() {
+      @Override
+      public void onStyleLoaded(@NonNull Style style) {
+        ValueAnimatorIconAnimationActivity.this.style = style;
+        mapView.addOnDidFinishRenderingMapListener(ValueAnimatorIconAnimationActivity.this);
+        initLayerIcon(style);
+        initDataSource(style);
+      }
+    });
   }
 
   /**
@@ -98,27 +103,18 @@ public class ValueAnimatorIconAnimationActivity extends AppCompatActivity implem
   /**
    * Add images to the map so that the SymbolLayers can reference the images.
    */
-  private void initLayerIcon() {
-    Bitmap bluePinIcon = BitmapUtils.getBitmapFromDrawable(
-      getResources().getDrawable(R.drawable.map_marker_push_pin_pink));
-    mapboxMap.addImage(ICON_ID, bluePinIcon);
-  }
-
-  /**
-   * Add the GeoJsonSource and SymbolLayers to the map.
-   */
-  private void addDataToMap() {
-    initLayerIcon();
-    initDataSource();
+  private void initLayerIcon(@NonNull Style loadedMapStyle) {
+    loadedMapStyle.addImage(ICON_ID, BitmapUtils.getBitmapFromDrawable(
+      getResources().getDrawable(R.drawable.map_marker_push_pin_pink)));
   }
 
   /**
    * Add GeoJsonSource with Features to the map.
    */
-  private void initDataSource() {
+  private void initDataSource(@NonNull Style loadedMapStyle) {
     // Add a new source from the GeoJSON data
-    mapboxMap.addSource(
-      new GeoJsonSource("source-id" + counter,
+    loadedMapStyle.addSource(
+      new GeoJsonSource("source-id",
         FeatureCollection.fromFeatures(new Feature[] {
           Feature.fromGeometry(Point.fromLngLat(
             119.86083984375,
@@ -164,13 +160,16 @@ public class ValueAnimatorIconAnimationActivity extends AppCompatActivity implem
     animator.setInterpolator(desiredTimeInterpolator);
     animator.setStartDelay(1000);
     animator.start();
-    animator.addUpdateListener(valueAnimator -> {
-      if (!animationHasStarted) {
-        initSymbolLayer();
-        animationHasStarted = true;
+    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+      @Override
+      public void onAnimationUpdate(ValueAnimator valueAnimator) {
+        if (!animationHasStarted) {
+          initSymbolLayer();
+          animationHasStarted = true;
+        }
+        pinSymbolLayer.setProperties(iconTranslate(new Float[]{0f,
+          (Float) valueAnimator.getAnimatedValue()}));
       }
-      pinSymbolLayer.setProperties(iconTranslate(new Float[]{0f,
-        (Float) valueAnimator.getAnimatedValue()}));
     });
   }
 
@@ -178,14 +177,14 @@ public class ValueAnimatorIconAnimationActivity extends AppCompatActivity implem
    * Add the SymbolLayer to the map
    */
   private void initSymbolLayer() {
-    pinSymbolLayer = new SymbolLayer("symbol-layer-id" + counter,
-        "source-id" + counter);
+    pinSymbolLayer = new SymbolLayer("symbol-layer-id",
+        "source-id");
     pinSymbolLayer.setProperties(
       iconImage(ICON_ID),
       iconIgnorePlacement(true),
       iconAllowOverlap(true),
       iconOffset(new Float[] {0f, DEFAULT_DESIRED_ICON_OFFSET}));
-    mapboxMap.addLayer(pinSymbolLayer);
+    style.addLayer(pinSymbolLayer);
   }
 
   /**
@@ -225,9 +224,8 @@ public class ValueAnimatorIconAnimationActivity extends AppCompatActivity implem
     }
     if (!firstRunThrough) {
       animationHasStarted = false;
-      mapboxMap.removeLayer("symbol-layer-id" + counter);
-      counter++;
-      addDataToMap();
+      style.removeLayer("symbol-layer-id");
+      initLayerIcon(style);
       initAnimation(currentSelectedTimeInterpolator);
     }
   }
